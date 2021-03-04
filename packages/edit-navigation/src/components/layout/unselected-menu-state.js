@@ -8,7 +8,7 @@ import { Card, CardBody } from '@wordpress/components';
  */
 import AddMenu from '../add-menu';
 
-export default function UnselectedMenuState({ onCreate } ) {
+export default function UnselectedMenuState( { onCreate } ) {
 	return (
 		<Card className="edit-navigation-empty-state">
 			<CardBody>
