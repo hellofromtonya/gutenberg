@@ -24,7 +24,7 @@ import { useRef } from '@wordpress/element';
 /**
  * Internal dependencies
  */
-import EmptyState from './empty-state';
+import UnselectedMenuState from './unselected-menu-state';
 import useNavigationEditor from './use-navigation-editor';
 import useNavigationBlockEditor from './use-navigation-block-editor';
 import useMenuNotifications from './use-menu-notifications';
@@ -96,7 +96,7 @@ export default function Layout( { blockEditorSettings } ) {
 						{ ! hasFinishedInitialLoad && <Spinner /> }
 
 						{ hasFinishedInitialLoad && ! hasMenus && (
-							<EmptyState
+							<UnselectedMenuState
 								onCreate={ () => setIsMenuDeleted( false ) }
 							/>
 						) }
