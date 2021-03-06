@@ -35,7 +35,6 @@ import Notices from '../notices';
 import Editor from '../editor';
 import InspectorAdditions from '../inspector-additions';
 import { store as editNavigationStore } from '../../store';
-import MenuSelector from '../menu-selector';
 
 export default function Layout( { blockEditorSettings } ) {
 	const canvasRef = useRef();
@@ -53,8 +52,7 @@ export default function Layout( { blockEditorSettings } ) {
 		isMenuBeingDeleted,
 		selectMenu,
 		deleteMenu,
-		isMenuDeleted,
-		setIsMenuDeleted,
+		isMenuSelected,
 	} = useNavigationEditor();
 
 	const [ blocks, onInput, onChange ] = useNavigationBlockEditor(
@@ -64,7 +62,12 @@ export default function Layout( { blockEditorSettings } ) {
 	useMenuNotifications( selectedMenuId );
 
 	const hasMenus = !! menus?.length;
-	const isBlockEditorReady = !! ( hasMenus && navigationPost );
+
+	const isBlockEditorReady = !! (
+		hasMenus &&
+		navigationPost &&
+		isMenuSelected
+	);
 	return (
 		<ErrorBoundary>
 			<div
@@ -83,21 +86,21 @@ export default function Layout( { blockEditorSettings } ) {
 							'has-block-inspector': isBlockEditorReady,
 						} ) }
 					>
-						{ ! isMenuDeleted && (
-							<Header
-								isPending={ ! hasLoadedMenus }
-								menus={ menus }
-								selectedMenuId={ selectedMenuId }
-								onSelectMenu={ selectMenu }
-								navigationPost={ navigationPost }
-							/>
-						) }
+						<Header
+							isMenuSelected={ isMenuSelected }
+							isPending={ ! hasLoadedMenus }
+							menus={ menus }
+							selectedMenuId={ selectedMenuId }
+							onSelectMenu={ selectMenu }
+							navigationPost={ navigationPost }
+						/>
 
 						{ ! hasFinishedInitialLoad && <Spinner /> }
 
-						{ hasFinishedInitialLoad && ! hasMenus && (
+						{ ! isMenuSelected && hasFinishedInitialLoad && (
 							<UnselectedMenuState
-								onCreate={ () => setIsMenuDeleted( false ) }
+								onSelectMenu={ selectMenu }
+								menus={ menus }
 							/>
 						) }
 
@@ -116,22 +119,16 @@ export default function Layout( { blockEditorSettings } ) {
 								<NavigationEditorShortcuts
 									saveBlocks={ savePost }
 								/>
-								{ isMenuDeleted ? (
-									<MenuSelector
-										onSelectMenu={ selectMenu }
-										menus={ menus }
+
+								<div
+									className="edit-navigation-layout__canvas"
+									ref={ canvasRef }
+								>
+									<Editor
+										isPending={ ! hasLoadedMenus }
+										blocks={ blocks }
 									/>
-								) : (
-									<div
-										className="edit-navigation-layout__canvas"
-										ref={ canvasRef }
-									>
-										<Editor
-											isPending={ ! hasLoadedMenus }
-											blocks={ blocks }
-										/>
-									</div>
-								) }
+								</div>
 								<InspectorAdditions
 									menuId={ selectedMenuId }
 									onDeleteMenu={ deleteMenu }

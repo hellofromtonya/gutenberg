@@ -16,7 +16,6 @@ export default function useNavigationEditor() {
 		false
 	);
 	const [ selectedMenuId, setSelectedMenuId ] = useState( null );
-	const [ isMenuDeleted, setIsMenuDeleted ] = useState( false );
 	const isMenuBeingDeleted = useSelect(
 		( select ) =>
 			select( 'core' ).isDeletingEntityRecord(
@@ -38,6 +37,7 @@ export default function useNavigationEditor() {
 		};
 	}, [] );
 
+	const [ isMenuSelected, setIsMenuSelected ] = useState( true );
 	const { createErrorNotice, createInfoNotice } = useDispatch( noticesStore );
 
 	useEffect( () => {
@@ -45,12 +45,6 @@ export default function useNavigationEditor() {
 			setHasFinishedInitialLoad( true );
 		}
 	}, [ hasLoadedMenus ] );
-
-	useEffect( () => {
-		if ( ! selectedMenuId && menus?.length ) {
-			setSelectedMenuId( menus[ 0 ].id );
-		}
-	}, [ selectedMenuId, menus ] );
 
 	const navigationPost = useSelect(
 		( select ) => {
@@ -64,11 +58,6 @@ export default function useNavigationEditor() {
 		[ selectedMenuId ]
 	);
 
-	const selectMenu = ( menuId ) => {
-		setIsMenuDeleted( false );
-		setSelectedMenuId( menuId );
-	};
-
 	const { deleteMenu: _deleteMenu } = useDispatch( 'core' );
 
 	const deleteMenu = async () => {
@@ -81,12 +70,14 @@ export default function useNavigationEditor() {
 				type: 'snackbar',
 				isDismissible: true,
 			} );
-			setIsMenuDeleted( true );
 		} else {
 			createErrorNotice( __( 'Menu deletion unsuccessful' ) );
 		}
 	};
 
+	useEffect( () => setIsMenuSelected( selectedMenuId !== null ), [
+		selectedMenuId,
+	] );
 	return {
 		menus,
 		hasLoadedMenus,
@@ -94,9 +85,8 @@ export default function useNavigationEditor() {
 		selectedMenuId,
 		navigationPost,
 		isMenuBeingDeleted,
-		selectMenu,
+		selectMenu: setSelectedMenuId,
 		deleteMenu,
-		isMenuDeleted,
-		setIsMenuDeleted,
+		isMenuSelected,
 	};
 }
