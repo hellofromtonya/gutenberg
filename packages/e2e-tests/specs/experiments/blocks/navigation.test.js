@@ -218,35 +218,29 @@ async function updateActiveNavigationLink( { url, label, type } ) {
 }
 
 async function selectDropDownOption( optionText ) {
-	const selectToggle = await page.waitForSelector(
-		'.wp-block-navigation-placeholder__select-control button'
+	const dropdown = await page.waitForXPath(
+		"//*[contains(@class, 'wp-block-navigation-placeholder__actions__dropdown')]"
 	);
-	await selectToggle.click();
+	await dropdown.click();
 	const theOption = await page.waitForXPath(
-		`//li[text()="${ optionText }"]`
+		`//*[contains(@class, 'components-menu-item__item')][ text()="${ optionText }" ]`
 	);
 	await theOption.click();
 }
 
-async function clickCreateButton() {
-	const buttonText = 'Create';
-	// Wait for button to become available
-	await page.waitForXPath(
-		`//button[text()="${ buttonText }"][not(@disabled)]`
-	);
+const PLACEHOLDER_ACTIONS_CLASS = 'wp-block-navigation-placeholder__actions';
+const PLACEHOLDER_ACTIONS_XPATH = `//*[contains(@class, '${ PLACEHOLDER_ACTIONS_CLASS }')]`;
+const START_EMPTY_XPATH = `${ PLACEHOLDER_ACTIONS_XPATH }//button[text()='Start empty']`;
+const ADD_ALL_PAGES_XPATH = `${ PLACEHOLDER_ACTIONS_XPATH }//button[text()='Add all pages']`;
 
-	// Then locate...
-	const createNavigationButton = await page.waitForXPath(
-		`//button[text()="${ buttonText }"][not(@disabled)]`
-	);
-
-	// Then click
-	await createNavigationButton.click();
+async function createNavBlockWithAllPages() {
+	const allPagesButton = await page.waitForXPath( ADD_ALL_PAGES_XPATH );
+	await allPagesButton.click();
 }
 
 async function createEmptyNavBlock() {
-	await selectDropDownOption( 'Create empty Navigation' );
-	await clickCreateButton();
+	const startEmptyButton = await page.waitForXPath( START_EMPTY_XPATH );
+	await startEmptyButton.click();
 }
 
 async function addLinkBlock() {
@@ -291,9 +285,7 @@ describe( 'Navigation', () => {
 			// Add the navigation block.
 			await insertBlock( 'Navigation' );
 
-			await selectDropDownOption( 'Create from all top-level pages' );
-
-			await clickCreateButton();
+			await createNavBlockWithAllPages();
 
 			// Snapshot should contain the mocked pages.
 			expect( await getEditedPostContent() ).toMatchSnapshot();
@@ -306,26 +298,15 @@ describe( 'Navigation', () => {
 			// Add the navigation block.
 			await insertBlock( 'Navigation' );
 
-			await page.waitForSelector(
-				'.wp-block-navigation-placeholder__select-control button'
-			);
-			await page.click(
-				'.wp-block-navigation-placeholder__select-control button'
-			);
+			await page.waitForXPath( START_EMPTY_XPATH );
 
-			const dropDownItemsLength = await page.$$eval(
-				'ul[role="listbox"] li[role="option"]',
+			const placeholderActionsLength = await page.$$eval(
+				`.${ PLACEHOLDER_ACTIONS_CLASS } button`,
 				( els ) => els.length
 			);
 
-			// Should only be showing
-			// 1. Create empty menu.
-			expect( dropDownItemsLength ).toEqual( 1 );
-
-			await page.waitForXPath( '//li[text()="Create empty Navigation"]' );
-
-			// Snapshot should contain the mocked menu items.
-			expect( await getEditedPostContent() ).toMatchSnapshot();
+			// Should only be showing "Start empty"
+			expect( placeholderActionsLength ).toEqual( 1 );
 		} );
 	} );
 
@@ -337,8 +318,6 @@ describe( 'Navigation', () => {
 			await insertBlock( 'Navigation' );
 
 			await selectDropDownOption( 'Test Menu 2' );
-
-			await clickCreateButton();
 
 			await page.waitForSelector( '.wp-block-navigation__container' );
 
@@ -366,8 +345,6 @@ describe( 'Navigation', () => {
 
 			await selectDropDownOption( 'Test Menu 1' );
 
-			await clickCreateButton();
-
 			// Scope element selector to the "Editor content" as otherwise it picks up on
 			// Block Style live previews.
 			const navBlockItemsLength = await page.$$eval(
@@ -389,29 +366,19 @@ describe( 'Navigation', () => {
 			// Add the navigation block.
 			await insertBlock( 'Navigation' );
 
-			await page.waitForSelector(
-				'.wp-block-navigation-placeholder__select-control button'
-			);
-			await page.click(
-				'.wp-block-navigation-placeholder__select-control button'
-			);
+			await page.waitForXPath( START_EMPTY_XPATH );
 
-			const dropDownItemsLength = await page.$$eval(
-				'ul[role="listbox"] li[role="option"]',
+			const placeholderActionsLength = await page.$$eval(
+				`.${ PLACEHOLDER_ACTIONS_CLASS } button`,
 				( els ) => els.length
 			);
 
-			// Should only be showing
-			// 1. Create empty menu.
-			expect( dropDownItemsLength ).toEqual( 1 );
-
-			await page.waitForXPath( '//li[text()="Create empty Navigation"]' );
-
-			// Snapshot should contain the mocked menu items.
-			expect( await getEditedPostContent() ).toMatchSnapshot();
+			// Should only be showing create empty menu.
+			expect( placeholderActionsLength ).toEqual( 1 );
 		} );
 	} );
 
+	//TODO: you are here in fixing tests.
 	it( 'allows an empty navigation block to be created and manually populated using a mixture of internal and external links', async () => {
 		// Add the navigation block.
 		await insertBlock( 'Navigation' );
