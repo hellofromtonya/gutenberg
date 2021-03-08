@@ -100,6 +100,7 @@ export default function Layout( { blockEditorSettings } ) {
 						{ ! isMenuSelected && hasFinishedInitialLoad && (
 							<UnselectedMenuState
 								onSelectMenu={ selectMenu }
+								onCreate={ selectMenu }
 								menus={ menus }
 							/>
 						) }
